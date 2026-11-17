@@ -22,8 +22,6 @@ from service import RegistrationService
 
 
 class FakeNotifier:
-    """Records every notification instead of sending it."""
-
     def __init__(self):
         self.sent = []
 
@@ -40,11 +38,10 @@ def connection(tmp_path):
     db.create_schema(conn)
     repo = RegistrationRepository(conn)
     with conn:
-        repo.add_course("C1", "Course One", 3, 2)   # 2 seats
-        repo.add_course("C2", "Course Two", 4, 1)   # 1 seat
-        repo.add_student("A", "Student A")
-        repo.add_student("B", "Student B")
-        repo.add_student("C", "Student C")
+        repo.add_course("C1", "Course One", 3, 2)
+        repo.add_course("C2", "Course Two", 4, 1)
+        for student_id in "ABC":
+            repo.add_student(student_id, student_id)
     yield conn
     conn.close()
 
