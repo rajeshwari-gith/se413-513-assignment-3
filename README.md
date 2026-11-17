@@ -94,18 +94,16 @@ pytest -m system          # system tests only (each starts its own server)
 | IP1 | HTTP client ↔ api.py | HTTP (JSON, API key header) | Body format: client sends a number or a missing field, API expects two short strings |
 | IP2 | api.py ↔ RegistrationService | Python calls + exceptions | Which exception maps to which status code (e.g. CourseFull → 409) |
 | IP3 | RegistrationService ↔ RegistrationRepository | Python calls + return values + exceptions | What a method does: `remove_enrollment(student, course)` should remove only one student's row |
-| IP4 | RegistrationRepository ↔ SQLite | SQL | Whether the SQL filters on the right columns, and who commits the transaction |
-| IP5 | RegistrationService ↔ notifier | Python calls | Argument order and meaning (fee vs. reason) and which outcomes send a notification |
+| IP4 | RegistrationRepository ↔ SQLite | SQL | Whether the SQL filters on the right columns |
+| IP5 | RegistrationService ↔ notifier | Python calls | Argument order and meaning (fee vs. reason) |
 
 ## 4(d) Known defect
 
 `remove_enrollment()` deletes `WHERE course_code = ?` without checking `student_id`,
 so when one student withdraws, every student in that course is removed.
-
 A unit test of `withdraw()` with a mocked repository would pass, because the mock
-just returns `True`, and the service does call `remove_enrollment()` and
-`release_seat()` with the correct arguments. The bug is in the real SQL, which the
-mock replaces, so only a test against a real database can show it.
+just returns `True` and the service does call `remove_enrollment()` and `release_seat()`
+with the correct arguments. The bug is in the real SQL, which the mock replaces.
 
 ## 5(c) Why concurrency needs a system test
 
