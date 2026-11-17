@@ -77,7 +77,7 @@ def test_enroll_success(connection, repository, service, notifier):
     assert notifier.sent == [("confirmation", "A", "C1", 300.0)]
 
 
-def test_enroll_full_course(connection, repository, service, notifier):
+def test_enroll_full_course(connection, service, notifier):
     """REQ-2, REQ-5"""
     service.enroll("A", "C2")
     with pytest.raises(CourseFull):
@@ -86,7 +86,7 @@ def test_enroll_full_course(connection, repository, service, notifier):
     assert notifier.sent[-1] == ("rejection", "B", "C2", "course is full")
 
 
-def test_enroll_duplicate(connection, repository, service, notifier):
+def test_enroll_duplicate(repository, service, notifier):
     """REQ-3, REQ-5"""
     service.enroll("A", "C1")
     with pytest.raises(AlreadyEnrolled):
