@@ -12,6 +12,8 @@ Modules are importable directly (see pyproject.toml), e.g.
     from errors import CourseFull, AlreadyEnrolled, NotEligible
 """
 
+# TODO: implement your tests here.
+
 import sqlite3
 
 import pytest
