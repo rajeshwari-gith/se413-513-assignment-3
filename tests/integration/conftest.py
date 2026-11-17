@@ -14,6 +14,8 @@ REAL SQLite database file -- inside the test process. Suggested fixtures
   - a RegistrationService built from the three.
 """
 
+# TODO: implement your fixtures here.
+
 import pytest
 
 import db
