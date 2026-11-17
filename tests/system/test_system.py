@@ -36,13 +36,14 @@ def test_enroll_success(system):
 
 
 def test_missing_prerequisite(system):
-    """REQ-1, REQ-5"""
+    """REQ-1, REQ-5, REQ-7"""
     response = system.enroll("S13", "SE413")
     assert response.status_code == 422
     assert response.json() == {"error": "prerequisite CIS350 not completed"}
     assert system.get("/students/S13/schedule").json()["courses"] == []
     assert seats(system, "SE413") == 0
-    assert system.outbox()[0]["type"] == "rejection"
+    assert system.outbox() == [{"type": "rejection", "student_id": "S13", "course_code": "SE413",
+                                "reason": "prerequisite CIS350 not completed"}]
 
 
 @pytest.mark.parametrize("body", [
@@ -53,7 +54,7 @@ def test_missing_prerequisite(system):
     '{"student_id": "S01\' OR 1=1 --", "course_code": "SE413"}',
 ])
 def test_invalid_body_gets_400(system, body):
-    """REQ-8"""
+    """REQ-5, REQ-8"""
     response = requests.post(f"{system.url}/enrollments", data=body,
                              headers={**KEY, "Content-Type": "application/json"})
     assert response.status_code == 400
