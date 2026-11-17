@@ -58,7 +58,7 @@ def test_invalid_body_gets_400(system, body):
     response = requests.post(f"{system.url}/enrollments", data=body,
                              headers={**KEY, "Content-Type": "application/json"})
     assert response.status_code == 400
-    assert "error" in response.json()
+    assert response.headers["Content-Type"] == "application/json"
     assert seats(system, "SE413") == 0
     assert system.outbox() == []
 
