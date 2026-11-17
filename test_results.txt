@@ -27,4 +27,4 @@ tests/system/test_system.py::test_api_key_required[GET-/students/S01/schedule] P
 tests/system/test_system.py::test_api_key_required[GET-/courses/SE413] PASSED [ 95%]
 tests/system/test_system.py::test_ten_students_three_seats PASSED        [100%]
 
-======================== 19 passed, 1 xfailed in 1.88s =========================
+======================== 19 passed, 1 xfailed in 1.86s =========================
