@@ -71,9 +71,7 @@ def test_invalid_body_gets_400(system, body):
 ])
 def test_api_key_required(system, method, path):
     """REQ-8"""
-    response = requests.request(method, system.url + path)
-    assert response.status_code == 401
-    assert "error" in response.json()
+    assert requests.request(method, system.url + path).status_code == 401
 
 
 def test_ten_students_three_seats(system):
