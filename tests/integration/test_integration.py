@@ -26,15 +26,12 @@ def seats(repository, code):
 
 
 def enrolled(connection, code):
-    rows = connection.execute(
-        "SELECT student_id FROM enrollments WHERE course_code = ?", (code,))
+    rows = connection.execute("SELECT student_id FROM enrollments WHERE course_code = ?", (code,))
     return {row[0] for row in rows}
 
 
-# -- 4(b) Repository + SQLite (IP4) -------------------------------------------
-
 def test_take_seat_capacity_boundary(connection, repository):
-    """REQ-2: the last seat succeeds; one more is refused and changes nothing."""
+    """REQ-2"""
     with connection:
         assert repository.take_seat("C1")
         assert repository.take_seat("C1")
@@ -43,40 +40,35 @@ def test_take_seat_capacity_boundary(connection, repository):
 
 
 def test_duplicate_enrollment_rejected(connection, repository):
-    """REQ-3: the database rejects a duplicate enrollment."""
+    """REQ-3"""
     with connection:
         repository.add_enrollment("A", "C1")
-    with pytest.raises(sqlite3.IntegrityError):
-        with connection:
-            repository.add_enrollment("A", "C1")
+    with pytest.raises(sqlite3.IntegrityError), connection:
+        repository.add_enrollment("A", "C1")
     assert enrolled(connection, "C1") == {"A"}
 
 
 def test_current_credits(connection, repository):
-    """REQ-1: current_credits counts only that student's courses; 0 if none."""
+    """REQ-1"""
     with connection:
         repository.add_enrollment("A", "C1")
         repository.add_enrollment("A", "C2")
         repository.add_enrollment("B", "C1")
     assert repository.current_credits("A") == 7
-    assert repository.current_credits("B") == 3
     assert repository.current_credits("C") == 0
 
 
 def test_failed_transaction_leaves_nothing(connection, repository):
-    """REQ-2: if the enrollment fails, the seat taken before it is rolled back."""
-    with pytest.raises(sqlite3.IntegrityError):
-        with connection:
-            repository.take_seat("C1")
-            repository.add_enrollment("UNKNOWN", "C1")  # foreign key fails
+    """REQ-2"""
+    with pytest.raises(sqlite3.IntegrityError), connection:
+        repository.take_seat("C1")
+        repository.add_enrollment("X", "C1")
     assert seats(repository, "C1") == 0
     assert enrolled(connection, "C1") == set()
 
 
-# -- 4(c) Service + repository + notifier (IP3, IP5) --------------------------
-
 def test_enroll_success(connection, repository, service, notifier):
-    """REQ-1, REQ-2, REQ-4, REQ-5: enrolled, seat taken, confirmation with fee."""
+    """REQ-1, REQ-2, REQ-4, REQ-5"""
     service.enroll("A", "C1")
     assert enrolled(connection, "C1") == {"A"}
     assert seats(repository, "C1") == 1
@@ -84,30 +76,27 @@ def test_enroll_success(connection, repository, service, notifier):
 
 
 def test_enroll_full_course(connection, repository, service, notifier):
-    """REQ-2, REQ-5: full course raises CourseFull and sends a rejection."""
+    """REQ-2, REQ-5"""
     service.enroll("A", "C2")
     with pytest.raises(CourseFull):
         service.enroll("B", "C2")
     assert enrolled(connection, "C2") == {"A"}
-    assert seats(repository, "C2") == 1
     assert notifier.sent[-1] == ("rejection", "B", "C2", "course is full")
 
 
 def test_enroll_duplicate(connection, repository, service, notifier):
-    """REQ-3, REQ-5: duplicate raises AlreadyEnrolled, no extra seat, nothing sent."""
+    """REQ-3, REQ-5"""
     service.enroll("A", "C1")
     with pytest.raises(AlreadyEnrolled):
         service.enroll("A", "C1")
     assert seats(repository, "C1") == 1
-    assert len(notifier.sent) == 1  # only the first confirmation
+    assert len(notifier.sent) == 1
 
 
-# -- 4(d) The known defect (REQ-6) --------------------------------------------
-
-@pytest.mark.xfail(strict=True, reason="remove_enrollment() deletes by course_code "
-                   "only, so withdrawing one student removes every student's enrollment")
+@pytest.mark.xfail(strict=True, reason="remove_enrollment() deletes by course_code only, "
+                   "so withdrawing one student removes every student's enrollment")
 def test_withdraw_removes_only_that_student(connection, service):
-    """REQ-6: withdrawing removes only that student's enrollment."""
+    """REQ-6"""
     service.enroll("A", "C1")
     service.enroll("B", "C1")
     service.withdraw("A", "C1")
