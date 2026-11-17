@@ -86,3 +86,37 @@ pytest -m system          # system tests only (each starts its own server)
   unexpectedly passes is reported as a failure.
 - System tests must not import from `src/`: they see only HTTP and the
   outbox, through the provided `system` fixture.
+
+---
+
+# My Work (Assignment 3)
+
+Run commands: `pytest -v` (full suite), `pytest -v -m integration`, `pytest -v -m system`.
+
+Result: all tests pass except the one strict xfail (4d). See `test_results.txt`.
+
+## 4(a) Integration points
+
+| IP | Components | Communication | Possible disagreement |
+|---|---|---|---|
+| IP1 | HTTP client ↔ api.py | HTTP (JSON, API key header) | Body format: client sends a number or a missing field, API expects two short strings |
+| IP2 | api.py ↔ RegistrationService | Python calls + exceptions | Which exception maps to which status code (e.g. CourseFull → 409) |
+| IP3 | RegistrationService ↔ RegistrationRepository | Python calls + return values + exceptions | What a method does: `remove_enrollment(student, course)` should remove only one student's row |
+| IP4 | RegistrationRepository ↔ SQLite | SQL | Whether the SQL filters on the right columns, and who commits the transaction |
+| IP5 | RegistrationService ↔ notifier | Python calls | Argument order and meaning (fee vs. reason) and which outcomes send a notification |
+
+## 4(d) Known defect
+
+`remove_enrollment()` deletes `WHERE course_code = ?` without checking `student_id`,
+so when one student withdraws, every student in that course is removed.
+
+A unit test of `withdraw()` with a mocked repository would pass, because the mock
+just returns `True`, and the service does call `remove_enrollment()` and
+`release_seat()` with the correct arguments. The bug is in the real SQL, which the
+mock replaces, so only a test against a real database can show it.
+
+## 5(c) Why concurrency needs a system test
+
+The race only happens in the running server, where each request runs on its own
+thread with its own database connection. An integration test uses one connection
+in one process, so the requests never actually compete for the seats.
