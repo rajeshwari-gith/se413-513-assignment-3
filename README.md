@@ -87,14 +87,6 @@ pytest -m system          # system tests only (each starts its own server)
 - System tests must not import from `src/`: they see only HTTP and the
   outbox, through the provided `system` fixture.
 
----
-
-# My Work (Assignment 3)
-
-Run commands: `pytest -v` (full suite), `pytest -v -m integration`, `pytest -v -m system`.
-
-Result: all tests pass except the one strict xfail (4d). See `test_results.txt`.
-
 ## 4(a) Integration points
 
 | IP | Components | Communication | Possible disagreement |
